@@ -8,8 +8,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Student Management System")
-        self.setFixedHeight(300)
-        self.setFixedWidth(414)
+        self.resize(414 , 300)
+        self.move(100 , 200)
 
         file = self.menuBar().addMenu("&File")
         help = self.menuBar().addMenu("&Help")
@@ -22,9 +22,13 @@ class MainWindow(QMainWindow):
         add_about_action = QAction("About" , self)
         help.addAction(add_about_action)
 
-        add_edit_action = QAction("Search" , self)
+        add_edit_action = QAction("Id Search" , self)
         add_edit_action.triggered.connect(self.search)
         edit.addAction(add_edit_action)
+
+        add_name_action = QAction("Name Search" , self)
+        add_name_action.triggered.connect(self.name_search)
+        edit.addAction(add_name_action)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -41,6 +45,7 @@ class MainWindow(QMainWindow):
             self.table.insertRow(row_number)
             for column_number , data in enumerate(row_data):
                 self.table.setItem(row_number , column_number , QTableWidgetItem(str(data)))
+
         connection.close()
 
     def insert(self):
@@ -50,14 +55,18 @@ class MainWindow(QMainWindow):
     def search(self):
         sd = SearchDialog()
         sd.exec()
+    
+    def name_search(self):
+        ns = NameSearchDialog()
+        ns.exec()
 
 class InsertDialog(QDialog):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Add Student Data")
-        self.setFixedHeight(250)
-        self.setFixedWidth(250)
+        self.resize(250 , 250)
+        self.move(1000 , 200)
 
         vlayout = QVBoxLayout()
 
@@ -74,15 +83,10 @@ class InsertDialog(QDialog):
         submit_button = QPushButton("Submit")
         submit_button.clicked.connect(self.add_student)
 
-        self.error = QLabel("")
-        self.success = QLabel("")
-
         vlayout.addWidget(self.student_name)
         vlayout.addWidget(self.student_combo)
         vlayout.addWidget(self.student_mobile)
         vlayout.addWidget(submit_button)
-        vlayout.addWidget(self.error)
-        vlayout.addWidget(self.success)
         
         self.setLayout(vlayout)
 
@@ -101,25 +105,25 @@ class InsertDialog(QDialog):
             cursor.close()
             connection.close()
             main_window.loadData()
-            self.error.setText("")
-            self.success.setText("Successfully Enter The Student Information")
+            str_success = SuccessfulDialog()
+            str_success.exec()
 
         else :
-            self.success.setText("")
-            self.error.setText("please fill properly") 
+            str_error = ErrorDialog()
+            str_error.exec()
 
 class SearchDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Search Student info")
-        self.setFixedHeight(250)
-        self.setFixedWidth(250)
+        self.resize(250 , 250)
+        self.move(1030 , 200)
 
         vlayout = QVBoxLayout()
 
-        self.name_search = QLineEdit()
-        self.name_search.setPlaceholderText("Name")
-        vlayout.addWidget(self.name_search)
+        self.id_search = QLineEdit()
+        self.id_search.setPlaceholderText("Enter ID")
+        vlayout.addWidget(self.id_search)
 
         search_button = QPushButton("Search")
         search_button.clicked.connect(self.info_search)
@@ -128,7 +132,103 @@ class SearchDialog(QDialog):
         self.setLayout(vlayout)
 
     def info_search(self):
-        pass
+        student_info = self.id_search.text()
+        if student_info.strip():
+            self.info_table = InfoTable()
+            self.info_table.info_data(student_info)
+            self.info_table.show()
+
+class NameSearchDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Search Student info")
+        self.resize(250 , 250)
+        self.move(1030 , 200)
+
+        vlayout = QVBoxLayout()
+
+        self.st_name = QLineEdit()
+        self.st_name.setPlaceholderText("Enter the name")
+        vlayout.addWidget(self.st_name)
+
+        st_button = QPushButton("Search")
+        st_button.clicked.connect(self.name_info_search)
+        vlayout.addWidget(st_button)
+
+        self.setLayout(vlayout)
+
+    def name_info_search(self):
+        student_name = self.st_name.text().title()
+        if (student_name != None):
+            self.name_info_table = InfoTable()
+            self.name_info_table.name_info(student_name)
+            self.name_info_table.show()
+
+class ErrorDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("ERROR!")
+        self.resize(150 , 40)
+        self.move(1000 , 500)
+
+        vlayout = QVBoxLayout()
+
+        error = QLabel("PLEASE ENTER PROPERLY")
+        vlayout.addWidget(error)
+
+class SuccessfulDialog(QDialog):
+     def __init__(self):
+        super().__init__()
+        self.setWindowTitle("SUCCESSFUL")
+        self.resize(150 , 40)
+        self.move(1000 , 500)
+
+        vlayout = QVBoxLayout()
+
+        successful = QLabel("ENTER SUCCESSFULLY")
+        vlayout.addWidget(successful)
+
+class InfoTable(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Selected student info")
+        self.setFixedHeight(200)
+        self.setFixedWidth(412)
+
+        self.table = QTableWidget()
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(("Id" , "Name" , "Course" , "Mobile"))
+        self.table.verticalHeader().setVisible(False)
+        self.setCentralWidget(self.table)
+
+    def info_data(self , student_id):
+        self.id = student_id
+        connection = sqlite3.connect("004 database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE id = ?" , (self.id,))
+        self.table.setRowCount(0)
+
+        for row_num , row_data in enumerate(result):
+            self.table.insertRow(row_num)
+            for col_num , data in enumerate(row_data):
+                self.table.setItem(row_num , col_num , QTableWidgetItem(str(data)))
+        cursor.close()
+        connection.close()
+    
+    def name_info(self , student_name):
+        self.name = student_name
+        connection = sqlite3.connect("004 database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE name = ?" , (self.name,))
+        self.table.setRowCount(0)
+
+        for row_num , row_data in enumerate(result):
+            self.table.insertRow(row_num)
+            for col_num , col_data in enumerate(row_data):
+                self.table.setItem(row_num , col_num , QTableWidgetItem(str(col_data)))
+        cursor.close()
+        connection.close()
         
 
 app = QApplication(sys.argv)
