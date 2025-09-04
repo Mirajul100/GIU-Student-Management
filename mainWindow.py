@@ -30,6 +30,10 @@ class MainWindow(QMainWindow):
         add_name_action.triggered.connect(self.name_search)
         edit.addAction(add_name_action)
 
+        add_course_action = QAction("Course Search" , self)
+        add_course_action.triggered.connect(self.course_data_search)
+        edit.addAction(add_course_action)
+
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(("Id" , "Name" , "Course" , "Mobile"))
@@ -59,6 +63,10 @@ class MainWindow(QMainWindow):
     def name_search(self):
         ns = NameSearchDialog()
         ns.exec()
+
+    def course_data_search(self):
+        cs = CourseDialog()
+        cs.exec()
 
 class InsertDialog(QDialog):
     def __init__(self):
@@ -137,6 +145,9 @@ class SearchDialog(QDialog):
             self.info_table = InfoTable()
             self.info_table.info_data(student_info)
             self.info_table.show()
+        if (student_info == ""):
+            self.error = ErrorDialog()
+            self.error.exec()
 
 class NameSearchDialog(QDialog):
     def __init__(self):
@@ -159,10 +170,42 @@ class NameSearchDialog(QDialog):
 
     def name_info_search(self):
         student_name = self.st_name.text().title()
-        if (student_name != None):
+        if (student_name != ""):
             self.name_info_table = InfoTable()
             self.name_info_table.name_info(student_name)
             self.name_info_table.show()
+        if (student_name == ""):
+            self.error = ErrorDialog()
+            self.error.exec()
+
+class CourseDialog(QDialog):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Course Search")
+        self.resize(250 , 250)
+        self.move(1030 , 200)
+
+        vlayout = QVBoxLayout()
+
+        self.course_search = QLineEdit()
+        self.course_search.setPlaceholderText("Enter the course")
+        vlayout.addWidget(self.course_search)
+
+        course_search_button = QPushButton("Search")
+        course_search_button.clicked.connect(self.course)
+        vlayout.addWidget(course_search_button)
+
+        self.setLayout(vlayout)
+
+    def course(self):
+        course_name = self.course_search.text().title()
+        if (course_name != ""):
+            self.course_info = InfoTable()
+            self.course_info.course_data(course_name)
+            self.course_info.show()
+        if (course_name == ""):
+            self.error = ErrorDialog()
+            self.error.exec()
 
 class ErrorDialog(QDialog):
     def __init__(self):
@@ -173,8 +216,9 @@ class ErrorDialog(QDialog):
 
         vlayout = QVBoxLayout()
 
-        error = QLabel("PLEASE ENTER PROPERLY")
-        vlayout.addWidget(error)
+        self.error = QLabel("PLEASE ENTER PROPERLY")
+        vlayout.addWidget(self.error)
+        self.setLayout(vlayout)
 
 class SuccessfulDialog(QDialog):
      def __init__(self):
@@ -185,8 +229,9 @@ class SuccessfulDialog(QDialog):
 
         vlayout = QVBoxLayout()
 
-        successful = QLabel("ENTER SUCCESSFULLY")
-        vlayout.addWidget(successful)
+        self.successful = QLabel("ENTER SUCCESSFULLY")
+        vlayout.addWidget(self.successful)
+        self.setLayout(vlayout)
 
 class InfoTable(QMainWindow):
     def __init__(self):
@@ -227,6 +272,20 @@ class InfoTable(QMainWindow):
             self.table.insertRow(row_num)
             for col_num , col_data in enumerate(row_data):
                 self.table.setItem(row_num , col_num , QTableWidgetItem(str(col_data)))
+        cursor.close()
+        connection.close()
+
+    def course_data(self , course_name):
+        self.c_name = course_name
+        connection = sqlite3.connect("004 database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE course = ?" , (self.c_name,))
+        self.table.setRowCount(0)
+
+        for row_num , row_data in enumerate(result):
+            self.table.insertRow(row_num)
+            for col_num , data in enumerate(row_data):
+                self.table.setItem(row_num , col_num , QTableWidgetItem(str(data)))
         cursor.close()
         connection.close()
         
