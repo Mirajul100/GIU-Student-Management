@@ -1,28 +1,30 @@
 from PyQt6.QtWidgets import QApplication , QLabel , QLineEdit , QPushButton , QGridLayout , QWidget,\
-    QMainWindow , QTableWidget , QTableWidgetItem , QDialog , QVBoxLayout , QComboBox
-from PyQt6.QtGui import QAction
+    QMainWindow , QTableWidget , QTableWidgetItem , QDialog , QVBoxLayout , QComboBox , QToolBar , QStatusBar
+from PyQt6.QtGui import QAction , QIcon
 import sys
 import sqlite3
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+
         self.setWindowTitle("Student Management System")
-        self.resize(414 , 300)
+        self.setWindowIcon(QIcon("image/home.png"))
+        self.resize(414 , 400)
         self.move(100 , 200)
 
         file = self.menuBar().addMenu("&File")
         help = self.menuBar().addMenu("&Help")
         edit = self.menuBar().addMenu("&Edit")
 
-        add_student_action = QAction("Add student" , self)
+        add_student_action = QAction(QIcon("image/add.png"),"Add student" , self)
         add_student_action.triggered.connect(self.insert)
         file.addAction(add_student_action)
 
         add_about_action = QAction("About" , self)
         help.addAction(add_about_action)
 
-        add_edit_action = QAction("Id Search" , self)
+        add_edit_action = QAction(QIcon("image/search.png"),"Id Search" , self)
         add_edit_action.triggered.connect(self.search)
         edit.addAction(add_edit_action)
 
@@ -33,6 +35,15 @@ class MainWindow(QMainWindow):
         add_course_action = QAction("Course Search" , self)
         add_course_action.triggered.connect(self.course_data_search)
         edit.addAction(add_course_action)
+
+        toolbar = QToolBar()
+        toolbar.setMovable(True)
+        toolbar.addAction(add_student_action)
+        toolbar.addAction(add_edit_action)
+        self.addToolBar(toolbar)
+
+        self.statusbar = QStatusBar()
+        self.setStatusBar(self.statusbar)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -49,8 +60,11 @@ class MainWindow(QMainWindow):
             self.table.insertRow(row_number)
             for column_number , data in enumerate(row_data):
                 self.table.setItem(row_number , column_number , QTableWidgetItem(str(data)))
-
+        
         connection.close()
+
+        value = QLabel(f"Total student number is : {row_number + 1}")
+        self.statusbar.addWidget(value)
 
     def insert(self):
         dialog = InsertDialog() 
@@ -212,7 +226,7 @@ class ErrorDialog(QDialog):
         super().__init__()
         self.setWindowTitle("ERROR!")
         self.resize(150 , 40)
-        self.move(1000 , 500)
+        self.move(1030 , 500)
 
         vlayout = QVBoxLayout()
 
@@ -225,7 +239,7 @@ class SuccessfulDialog(QDialog):
         super().__init__()
         self.setWindowTitle("SUCCESSFUL")
         self.resize(150 , 40)
-        self.move(1000 , 500)
+        self.move(1030 , 500)
 
         vlayout = QVBoxLayout()
 
@@ -238,14 +252,18 @@ class InfoTable(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("Selected student info")
-        self.setFixedHeight(200)
-        self.setFixedWidth(412)
+        self.setWindowIcon(QIcon("image/icon.png"))
+        self.resize(414 , 400)
+        self.move(562 , 200)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(("Id" , "Name" , "Course" , "Mobile"))
         self.table.verticalHeader().setVisible(False)
         self.setCentralWidget(self.table)
+
+        self.status = QStatusBar()
+        self.setStatusBar(self.status)
 
     def info_data(self , student_id):
         self.id = student_id
@@ -262,33 +280,47 @@ class InfoTable(QMainWindow):
         connection.close()
     
     def name_info(self , student_name):
-        self.name = student_name
-        connection = sqlite3.connect("004 database.db")
-        cursor = connection.cursor()
-        result = cursor.execute("SELECT * FROM students WHERE name = ?" , (self.name,))
-        self.table.setRowCount(0)
+        try:
+            self.name = student_name
+            connection = sqlite3.connect("004 database.db")
+            cursor = connection.cursor()
+            result = cursor.execute("SELECT * FROM students WHERE name = ?" , (self.name,))
+            self.table.setRowCount(0)
 
-        for row_num , row_data in enumerate(result):
-            self.table.insertRow(row_num)
-            for col_num , col_data in enumerate(row_data):
-                self.table.setItem(row_num , col_num , QTableWidgetItem(str(col_data)))
-        cursor.close()
-        connection.close()
+            for row_num , row_data in enumerate(result):
+                self.table.insertRow(row_num)
+                for col_num , col_data in enumerate(row_data):
+                    self.table.setItem(row_num , col_num , QTableWidgetItem(str(col_data)))
+            cursor.close()
+            connection.close()
+            
+            value = QLabel(f"Total student of same name : {row_num + 1}")
+            self.status.addWidget(value)
+        except(UnboundLocalError):
+            value = QLabel(f"There are no student in name of {self.name}")
+            self.status.addWidget(value)
 
     def course_data(self , course_name):
-        self.c_name = course_name
-        connection = sqlite3.connect("004 database.db")
-        cursor = connection.cursor()
-        result = cursor.execute("SELECT * FROM students WHERE course = ?" , (self.c_name,))
-        self.table.setRowCount(0)
+        try:
+            self.c_name = course_name
+            connection = sqlite3.connect("004 database.db")
+            cursor = connection.cursor()
+            result = cursor.execute("SELECT * FROM students WHERE course = ?" , (self.c_name,))
+            self.table.setRowCount(0)
 
-        for row_num , row_data in enumerate(result):
-            self.table.insertRow(row_num)
-            for col_num , data in enumerate(row_data):
-                self.table.setItem(row_num , col_num , QTableWidgetItem(str(data)))
-        cursor.close()
-        connection.close()
-        
+            for row_num , row_data in enumerate(result):
+                self.table.insertRow(row_num)
+                for col_num , data in enumerate(row_data):
+                    self.table.setItem(row_num , col_num , QTableWidgetItem(str(data)))
+            cursor.close()
+            connection.close()
+
+            value = QLabel(f"Total number of student enroll in {self.c_name} is : {row_num + 1}")
+            self.status.addWidget(value)
+        except(UnboundLocalError): 
+            value = QLabel(f"{self.c_name} course if not available")
+            self.status.addWidget(value)
+
 
 app = QApplication(sys.argv)
 main_window = MainWindow()
