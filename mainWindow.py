@@ -88,7 +88,7 @@ class InsertDialog(QDialog):
 
         self.setWindowTitle("Add Student Data")
         self.resize(250 , 250)
-        self.move(1000 , 200)
+        self.move(1030 , 200)
 
         vlayout = QVBoxLayout()
 
