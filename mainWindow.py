@@ -1,6 +1,8 @@
 from PyQt6.QtWidgets import QApplication , QLabel , QLineEdit , QPushButton , QGridLayout , QWidget,\
     QMainWindow , QTableWidget , QTableWidgetItem , QDialog , QVBoxLayout , QComboBox , QToolBar , QStatusBar
-from PyQt6.QtGui import QAction , QIcon
+    
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction , QIcon , QCursor
 import sys
 import sqlite3
 
@@ -19,14 +21,17 @@ class MainWindow(QMainWindow):
 
         add_student_action = QAction(QIcon("image/add.png"),"Add student" , self)
         add_student_action.triggered.connect(self.insert)
+        file.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         file.addAction(add_student_action)
 
         add_about_action = QAction("About" , self)
         help.addAction(add_about_action)
+        help.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         add_edit_action = QAction(QIcon("image/search.png"),"Id Search" , self)
         add_edit_action.triggered.connect(self.search)
         edit.addAction(add_edit_action)
+        edit.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         add_name_action = QAction("Name Search" , self)
         add_name_action.triggered.connect(self.name_search)
@@ -49,8 +54,28 @@ class MainWindow(QMainWindow):
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(("Id" , "Name" , "Course" , "Mobile"))
         self.table.verticalHeader().setVisible(False)
+        self.table.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         self.setCentralWidget(self.table)
 
+        self.table.cellClicked.connect(self.cell_clicked)
+    
+    def cell_clicked(self):
+        record_edit_button = QPushButton("Record Edit")
+        record_edit_button.clicked.connect(self.record_edit)
+
+        delete_button = QPushButton("Delete Record")
+        delete_button.clicked.connect(self.delete_record)
+       
+        
+        children = self.findChildren(QPushButton)
+        if children:
+            for child in children:
+                self.statusbar.removeWidget(child)
+
+        self.statusbar.addWidget(delete_button)
+        self.statusbar.addWidget(record_edit_button)
+        record_edit_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        delete_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
     def loadData(self):
         connection = sqlite3.connect("004 database.db")
         result = connection.execute("SELECT * FROM students")
@@ -64,6 +89,9 @@ class MainWindow(QMainWindow):
         connection.close()
 
         value = QLabel(f"Total student number is : {row_number + 1}")
+        total_value = self.findChildren(QLabel)
+        for child in total_value:
+            self.statusbar.removeWidget(child)
         self.statusbar.addWidget(value)
 
     def insert(self):
@@ -82,11 +110,20 @@ class MainWindow(QMainWindow):
         cs = CourseDialog()
         cs.exec()
 
+    def record_edit(self):
+        record = RecordDialog()
+        record.exec()
+
+    def delete_record(self):
+        delete = DeleteDialog()
+        delete.exec()
+
 class InsertDialog(QDialog):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("Add Student Data")
+        self.setWindowIcon(QIcon("image/add_person.png"))
         self.resize(250 , 250)
         self.move(1030 , 200)
 
@@ -98,12 +135,14 @@ class InsertDialog(QDialog):
         self.student_combo = QComboBox()
         item = ["Biology" , "Math" , "Physics" , "Chemistry"]
         self.student_combo.addItems(item)
+        self.student_combo.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         self.student_mobile = QLineEdit()
         self.student_mobile.setPlaceholderText("Mobile Number")
 
         submit_button = QPushButton("Submit")
         submit_button.clicked.connect(self.add_student)
+        submit_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
 
         vlayout.addWidget(self.student_name)
         vlayout.addWidget(self.student_combo)
@@ -138,6 +177,7 @@ class SearchDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Search Student info")
+        self.setWindowIcon(QIcon("image/search_person.png"))
         self.resize(250 , 250)
         self.move(1030 , 200)
 
@@ -149,6 +189,7 @@ class SearchDialog(QDialog):
 
         search_button = QPushButton("Search")
         search_button.clicked.connect(self.info_search)
+        search_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         vlayout.addWidget(search_button)
 
         self.setLayout(vlayout)
@@ -167,6 +208,7 @@ class NameSearchDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Search Student info")
+        self.setWindowIcon(QIcon("image/face.png"))
         self.resize(250 , 250)
         self.move(1030 , 200)
 
@@ -178,6 +220,7 @@ class NameSearchDialog(QDialog):
 
         st_button = QPushButton("Search")
         st_button.clicked.connect(self.name_info_search)
+        st_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         vlayout.addWidget(st_button)
 
         self.setLayout(vlayout)
@@ -196,6 +239,7 @@ class CourseDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Course Search")
+        self.setWindowIcon(QIcon("image/course.png"))
         self.resize(250 , 250)
         self.move(1030 , 200)
 
@@ -207,6 +251,7 @@ class CourseDialog(QDialog):
 
         course_search_button = QPushButton("Search")
         course_search_button.clicked.connect(self.course)
+        course_search_button.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
         vlayout.addWidget(course_search_button)
 
         self.setLayout(vlayout)
@@ -225,6 +270,7 @@ class ErrorDialog(QDialog):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ERROR!")
+        self.setWindowIcon(QIcon("image/error.png"))
         self.resize(150 , 40)
         self.move(1030 , 500)
 
@@ -238,6 +284,7 @@ class SuccessfulDialog(QDialog):
      def __init__(self):
         super().__init__()
         self.setWindowTitle("SUCCESSFUL")
+        self.setWindowIcon(QIcon("image/check.png"))
         self.resize(150 , 40)
         self.move(1030 , 500)
 
@@ -246,6 +293,12 @@ class SuccessfulDialog(QDialog):
         self.successful = QLabel("ENTER SUCCESSFULLY")
         vlayout.addWidget(self.successful)
         self.setLayout(vlayout)
+
+class RecordDialog(QDialog):
+    pass
+
+class DeleteDialog(QDialog):
+    pass
 
 class InfoTable(QMainWindow):
     def __init__(self):
